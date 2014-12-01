@@ -13,6 +13,7 @@ module Data.CircularBuffer
 
       -- * Querying
     , null
+    , full
     , length
     , maxLength
 
@@ -105,6 +106,10 @@ fromList maxLength = fromVector maxLength . V.fromList
 -- | True if the buffer is empty, False otherwise.
 null :: CircularBuffer a -> IO Bool
 null cb = (== 0) <$> length cb
+
+-- | 'True' if the buffer is full, 'False' otherwise.
+full :: CircularBuffer a -> IO Bool
+full cb = (== maxLength cb) <$> length cb
 
 -- | The current number of elements in the given buffer.
 length :: CircularBuffer a -> IO Int

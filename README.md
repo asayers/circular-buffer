@@ -13,6 +13,7 @@ fromList   :: Int -> [a]        -> IO (CircularBuffer a)
 
 -- * Querying
 null       :: CircularBuffer a -> IO Bool
+full       :: CircularBuffer a -> IO Bool
 length     :: CircularBuffer a -> IO Int
 maxLength  :: CircularBuffer a -> Int
 
