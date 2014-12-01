@@ -4,15 +4,18 @@
 module Data.CircularBuffer
     ( CircularBuffer
     , empty
+    , fromVector
+    , fromList
     , length
     , maxLength
     , push
     , evict
-    , listElems
+    , toVector
+    , toList
     ) where
 
 import           Control.Concurrent.MVar
-import           Control.Monad
+import           Control.Monad       (when)
 import           Control.Applicative ((<$>))
 
 import           Data.Maybe          (fromJust)
@@ -47,6 +50,28 @@ empty maxLength = do
       , cbData      = cbd
       }
 
+fromVector :: Int -> V.Vector a -> IO (CircularBuffer a)
+fromVector maxLength initialElems = do
+    when (maxLength <= 0) $
+      error "CircularBuffer.fromVector: buffer length must be greater than zero"
+    when (V.length initialElems > maxLength) $
+      error "CircularBuffer.fromVector: seed vector is larger than maxLength"
+    contents <- do
+        vec <- V.thaw initialElems
+        VM.grow vec (maxLength - V.length initialElems)
+    cbd <- newMVar $ CBData
+      { cbStartIdx = 0
+      , cbLength   = V.length initialElems
+      }
+    return $ CircularBuffer
+      { cbMaxLength = maxLength
+      , cbContents  = contents
+      , cbData      = cbd
+      }
+
+fromList :: Int -> [a] -> IO (CircularBuffer a)
+fromList maxLength = fromVector maxLength . V.fromList
+
 maxLength :: CircularBuffer a -> Int
 maxLength = cbMaxLength
 
@@ -73,8 +98,8 @@ evict cb =
         , cbLength   = max 0 $ cbLength cbd - 1
         }
 
-listElems :: CircularBuffer a -> IO (V.Vector a)
-listElems cb = do
+toVector :: CircularBuffer a -> IO (V.Vector a)
+toVector cb = do
     CBData { cbStartIdx = startIdx, cbLength = len } <- readMVar $ cbData cb
     let highestIdx = cbMaxLength cb
         takeSlice sliceStart sliceLength =
@@ -88,3 +113,5 @@ listElems cb = do
         ]
 
 
+toList :: CircularBuffer a -> IO [a]
+toList = fmap V.toList . toVector
