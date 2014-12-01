@@ -16,10 +16,13 @@ null       :: CircularBuffer a -> IO Bool
 full       :: CircularBuffer a -> IO Bool
 length     :: CircularBuffer a -> IO Int
 maxLength  :: CircularBuffer a -> Int
+read       :: CircularBuffer a -> IO (Maybe a)
 
 -- * Modifying
-push       :: a -> CircularBuffer a -> IO ()
-evict      :: CircularBuffer a -> IO ()
+write      :: a -> CircularBuffer a -> IO ()
+evict      ::      CircularBuffer a -> IO ()
+enqueue    :: a -> CircularBuffer a -> IO Bool
+dequeue    ::      CircularBuffer a -> IO (Maybe a)
 
 -- * Deconstruction
 toVector   :: CircularBuffer a -> IO (V.Vector a)

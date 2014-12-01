@@ -17,10 +17,13 @@ module Data.CircularBuffer
     , full
     , length
     , maxLength
+    , read
 
       -- * Modifying
-    , push
+    , write
     , evict
+    , enqueue
+    , dequeue
 
       -- * Deconstruction
     , toVector
@@ -31,11 +34,11 @@ import           Control.Concurrent.MVar
 import           Control.Monad       (when)
 import           Control.Applicative ((<$>))
 
-import           Data.Maybe          (fromJust)
+import           Data.Maybe          (fromJust, isJust)
 import qualified Data.Vector         as V
 import qualified Data.Vector.Mutable as VM
 
-import           Prelude             hiding (length, null)
+import           Prelude             hiding (length, null, read)
 
 
 -------------------------------------------------------------------------------
@@ -124,14 +127,22 @@ length cb = fmap cbdLength $ readMVar $ cbData cb
 maxLength :: CircularBuffer a -> Int
 maxLength = cbMaxLength
 
+-- | Returns the oldest element in the buffer, if it contains any elements.
+read :: CircularBuffer a -> IO (Maybe a)
+read cb = do
+    cbd <- readMVar $ cbData cb
+    if (cbdLength cbd == 0)
+      then return Nothing
+      else Just <$> VM.read (cbContents cb) (cbdStartIdx cbd)
+
 -------------------------------------------------------------------------------
 -- Modifying
 -------------------------------------------------------------------------------
 
 -- | Add an element to the buffer. If the buffer is already at its maximum
 -- size, this will cause the oldest element to be evicted.
-push :: a -> CircularBuffer a -> IO ()
-push x cb =
+write :: a -> CircularBuffer a -> IO ()
+write x cb =
     modifyMVar_ (cbData cb) $ \cbd -> do
       let nextWriteIdx = (cbdStartIdx cbd + cbdLength cbd) `mod` cbMaxLength cb
       VM.write (cbContents cb) nextWriteIdx x
@@ -147,6 +158,24 @@ evict cb =
         { cbdStartIdx = (cbdStartIdx cbd + 1) `mod` cbMaxLength cb
         , cbdLength   = max 0 $ cbdLength cbd - 1
         }
+
+-- | Add an element to the buffer, but only if it isn't already full. Returns
+-- 'True' if the write succeeded, and 'False' otherwise.
+enqueue :: a -> CircularBuffer a -> IO Bool
+enqueue x cb = do
+    isFull <- full cb
+    if isFull
+      then return False
+      else write x cb >> return True
+
+-- | Read the oldest element and drop it from the buffer, if the buffer
+-- contains any elements.
+dequeue :: CircularBuffer a -> IO (Maybe a)
+dequeue cb = do
+    x <- read cb
+    when (isJust x) $ evict cb
+    return x
+
 
 -------------------------------------------------------------------------------
 -- Deconstruction
