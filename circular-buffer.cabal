@@ -1,0 +1,21 @@
+name:                circular-buffer
+version:             0.1.0.0
+synopsis:            A vector-based circular buffer
+description:         A buffer of bounded length which stores elements in the
+                     order they're added. When adding an element to a buffer
+                     which has reached its maximum length, the oldest element
+                     is dropped to make room.
+license:             BSD2
+license-file:        LICENSE
+author:              Alex Sayers
+maintainer:          alex.sayers@gmail.com
+copyright:           Alex Sayers, 2014
+category:            Data
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  exposed-modules:     Data.CircularBuffer
+  build-depends:       base >=4.7 && <4.8, vector >=0.10 && <0.11
+  hs-source-dirs:      src
+  default-language:    Haskell2010
