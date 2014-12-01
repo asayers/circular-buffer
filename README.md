@@ -7,13 +7,14 @@ maximum length, the oldest element is dropped to make room.
 
 ```haskell
 -- * Construction
-empty      :: Int -> IO (CircularBuffer a)
+empty      :: Int ->               IO (CircularBuffer a)
 fromVector :: Int -> V.Vector a -> IO (CircularBuffer a)
-fromList   :: Int -> [a] -> IO (CircularBuffer a)
+fromList   :: Int -> [a]        -> IO (CircularBuffer a)
 
 -- * Querying
-maxLength  :: CircularBuffer a -> Int)
+null       :: CircularBuffer a -> IO Bool
 length     :: CircularBuffer a -> IO Int
+maxLength  :: CircularBuffer a -> Int
 
 -- * Modifying
 push       :: a -> CircularBuffer a -> IO ()

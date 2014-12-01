@@ -1,6 +1,8 @@
 -- | This module provides a buffer of bounded length which stores elements in
 -- the order they're added. When adding an element to a buffer which has
 -- reached its maximum length, the oldest element is dropped to make room.
+--
+-- This module is intended to be imported qualified.
 module Data.CircularBuffer
     ( CircularBuffer
 
@@ -10,8 +12,9 @@ module Data.CircularBuffer
     , fromList
 
       -- * Querying
-    , maxLength
+    , null
     , length
+    , maxLength
 
       -- * Modifying
     , push
@@ -30,7 +33,7 @@ import           Data.Maybe          (fromJust)
 import qualified Data.Vector         as V
 import qualified Data.Vector.Mutable as VM
 
-import           Prelude             hiding (length)
+import           Prelude             hiding (length, null)
 
 
 -------------------------------------------------------------------------------
@@ -99,13 +102,17 @@ fromList maxLength = fromVector maxLength . V.fromList
 -- Querying
 -------------------------------------------------------------------------------
 
--- | The upper-bound for the number of elements in the given buffer.
-maxLength :: CircularBuffer a -> Int
-maxLength = cbMaxLength
+-- | True if the buffer is empty, False otherwise.
+null :: CircularBuffer a -> IO Bool
+null cb = (== 0) <$> length cb
 
 -- | The current number of elements in the given buffer.
 length :: CircularBuffer a -> IO Int
 length cb = fmap cbLength $ readMVar $ cbData cb
+
+-- | The upper-bound for the number of elements in the given buffer.
+maxLength :: CircularBuffer a -> Int
+maxLength = cbMaxLength
 
 -------------------------------------------------------------------------------
 -- Modifying
